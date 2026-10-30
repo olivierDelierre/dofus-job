@@ -32,7 +32,6 @@ export function Login({ onLogged }: { onLogged: (u: User) => void }) {
           ))}
         </div>
         <h1>Atelier</h1>
-        <p className="muted">Planifie la montée de tes métiers Dofus 3 au moindre nombre de crafts.</p>
 
         <div className="tabs">
           <button className={mode === 'login' ? 'active' : ''} onClick={() => setMode('login')} type="button">

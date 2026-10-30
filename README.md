@@ -1,6 +1,6 @@
-# Atelier — métiers Dofus 3
+# Atelier — métiers Dofus
 
-Web-app pour planifier la montée des métiers de Dofus 3 au plus petit nombre de crafts, avec comptes utilisateurs et sauvegarde de la progression.
+App locale pour suivre nos métiers Dofus : niveau actuel, niveau visé, crafts à faire et ressources nécessaires. Un compte par personne, progression sauvegardée côté serveur.
 
 ## Lancer
 

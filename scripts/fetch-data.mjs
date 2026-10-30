@@ -1,4 +1,4 @@
-// Récupère les données Dofus 3 depuis l'API DofusDB et produit public/data/game.json
+// Récupère les données Dofus depuis l'API DofusDB et produit public/data/game.json
 // + les icônes (métiers, objets) dans public/img.
 // Usage : node scripts/fetch-data.mjs [--no-icons | --icons-only]
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises';

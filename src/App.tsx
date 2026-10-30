@@ -3,6 +3,7 @@ import { api, type JobProgress, type Settings, type User } from './api';
 import { Login } from './components/Login';
 import { JobList } from './components/JobList';
 import { JobPanel } from './components/JobPanel';
+import { SettingsMenu } from './components/SettingsMenu';
 import { createRarityResolver } from './lib/rarity';
 import type { GameData } from './lib/types';
 
@@ -13,6 +14,7 @@ export function App() {
   const [data, setData] = useState<GameData | null>(null);
   const [progress, setProgress] = useState<Record<string, JobProgress>>({});
   const [selected, setSelected] = useState<number | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
 
@@ -36,6 +38,13 @@ export function App() {
     const first = data.jobs.find((j) => !hidden?.includes(j.id));
     if (first) setSelected(first.id);
   }, [data, selected, hidden]);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setDrawerOpen(false);
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [drawerOpen]);
 
   const rarity = useMemo(() => (data ? createRarityResolver(data) : null), [data]);
 
@@ -64,7 +73,7 @@ export function App() {
   );
 
   if (user === undefined || !data || !rarity) {
-    return <div className="splash">Chargement de l'atelier…</div>;
+    return <div className="splash">Chargement…</div>;
   }
   if (user === null) return <Login onLogged={setUser} />;
 
@@ -73,67 +82,43 @@ export function App() {
   return (
     <div className="app">
       <header className="topbar">
+        <button className="icon-btn menu-btn" aria-label="Liste des métiers" aria-expanded={drawerOpen} onClick={() => setDrawerOpen((o) => !o)}>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </button>
         <div className="brand">
-          <img src="/img/jobs/27.png" alt="" />
-          <span>Atelier</span>
-          <small>Métiers Dofus 3</small>
+          <img src={`/img/jobs/${job.id}.png`} alt="" />
+          <span className="brand-name">Atelier</span>
+          <span className="brand-job">{job.name}</span>
         </div>
-        <div className="settings">
-          <label title="Les ingrédients rares (boss à faible drop, archimonstres, boutiques à jetons…) sont exclus par défaut.">
-            Ingrédients
-            <select
-              value={user.settings.maxRarity}
-              onChange={(e) => updateSettings({ ...user.settings, maxRarity: Number(e.target.value) as 0 | 1 | 2 })}
-            >
-              <option value={0}>Communs uniquement</option>
-              <option value={1}>Communs + peu communs</option>
-              <option value={2}>Tout, même rares</option>
-            </select>
-          </label>
-          <label className="check" title="Fabriquer soi-même les ingrédients que le métier sait faire (ex. planches pour les substrats du Bûcheron) : leur XP et leurs crafts sont comptés.">
-            <input
-              type="checkbox"
-              checked={user.settings.craftSubs}
-              onChange={(e) => updateSettings({ ...user.settings, craftSubs: e.target.checked })}
-            />
-            Crafter les intermédiaires
-          </label>
-          <label title="Bonus Almanax, événement, etc.">
-            Bonus XP
-            <span className="suffix-input">
-              <input
-                type="number"
-                min={0}
-                max={500}
-                step={25}
-                value={user.settings.bonus}
-                onChange={(e) => updateSettings({ ...user.settings, bonus: Math.max(0, Number(e.target.value) || 0) })}
-              />
-              %
-            </span>
-          </label>
-        </div>
-        <div className="account">
-          <span className={`save-state ${saveState}`}>
-            {saveState === 'saving' ? 'Sauvegarde…' : saveState === 'saved' ? 'Sauvegardé' : saveState === 'error' ? 'Erreur de sauvegarde' : ''}
-          </span>
-          <span className="username">{user.username}</span>
-          <button className="ghost" onClick={() => api.logout().then(() => setUser(null))}>
-            Déconnexion
-          </button>
-        </div>
+        <span className={`save-state ${saveState}`}>
+          {saveState === 'saving' ? 'Sauvegarde…' : saveState === 'saved' ? 'Sauvegardé' : saveState === 'error' ? 'Erreur de sauvegarde' : ''}
+        </span>
+        <SettingsMenu
+          username={user.username}
+          settings={user.settings}
+          onChange={updateSettings}
+          onLogout={() => api.logout().then(() => setUser(null))}
+        />
       </header>
 
       <main className="layout">
-        <JobList
-          data={data}
-          rarity={rarity}
-          settings={user.settings}
-          progress={progress}
-          selected={job.id}
-          onSelect={setSelected}
-          onSettingsChange={updateSettings}
-        />
+        <div className={`backdrop ${drawerOpen ? 'open' : ''}`} onClick={() => setDrawerOpen(false)} />
+        <aside className={`sidebar ${drawerOpen ? 'open' : ''}`}>
+          <JobList
+            data={data}
+            rarity={rarity}
+            settings={user.settings}
+            progress={progress}
+            selected={job.id}
+            onSelect={(id) => {
+              setSelected(id);
+              setDrawerOpen(false);
+            }}
+            onSettingsChange={updateSettings}
+          />
+        </aside>
         <JobPanel
           key={job.id}
           job={job}
@@ -145,7 +130,7 @@ export function App() {
         />
       </main>
       <footer className="footer">
-        Données et icônes : DofusDB / Ankama Games. Fan-site non officiel. Données du {new Date(data.generatedAt).toLocaleDateString('fr-FR')}.
+        Données DofusDB du {new Date(data.generatedAt).toLocaleDateString('fr-FR')}
       </footer>
     </div>
   );

@@ -84,7 +84,7 @@ export function JobPanel({ job, data, rarity, settings, progress, onChange }: Pr
             </label>
           </span>
         </label>
-        <label title="Ne change de recette qu'à chaque palier : moins optimal, mais moins de recettes différentes à préparer.">
+        <label title="Ne change de recette qu'à chaque palier : un peu plus de crafts, moins de recettes différentes.">
           Changer de recette
           <select value={progress.step} onChange={(e) => set({ step: Number(e.target.value) })}>
             {STEPS.map((s) => (
@@ -123,7 +123,7 @@ export function JobPanel({ job, data, rarity, settings, progress, onChange }: Pr
       )}
 
       {progress.level >= target ? (
-        <div className="empty">Objectif atteint. Augmente le niveau visé pour voir la suite.</div>
+        <div className="empty">Objectif atteint.</div>
       ) : (
         <>
           <div className="tabs small">
