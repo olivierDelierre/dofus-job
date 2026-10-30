@@ -273,6 +273,52 @@ button {
   overflow-y: auto;
   padding-right: 4px;
 }
+.job-list-tools {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.job-list-tools select {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  font-size: 13px;
+}
+.job-list-tools .ghost {
+  white-space: nowrap;
+}
+.ghost.active {
+  color: var(--gold-2);
+  border-color: var(--gold);
+}
+.manage-hint {
+  margin: 0 2px 2px;
+}
+.job-row {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+.job-row .job-card {
+  flex: 1;
+  min-width: 0;
+}
+.job-row.is-hidden .job-card {
+  opacity: 0.45;
+}
+.eye {
+  flex: none;
+  width: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.eye:hover,
+.eye[aria-pressed='false'] {
+  color: var(--gold-2);
+}
 .job-card {
   display: flex;
   gap: 12px;

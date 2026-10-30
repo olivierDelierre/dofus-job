@@ -1,9 +1,19 @@
 import type { Rarity } from './lib/types';
 
+export type JobSort = 'default' | 'alpha' | 'level';
+
 export interface Settings {
   maxRarity: Rarity;
   bonus: number;
+  sort: JobSort;
+  /** Métiers masqués de la liste. */
+  hidden: number[];
 }
+
+export const DEFAULT_SETTINGS: Settings = { maxRarity: 1, bonus: 0, sort: 'default', hidden: [] };
+
+// Les comptes créés avant l'ajout d'un réglage n'ont pas toutes les clés.
+const withDefaults = (u: User): User => ({ ...u, settings: { ...DEFAULT_SETTINGS, ...u.settings } });
 
 export interface User {
   id: number;
@@ -32,9 +42,10 @@ async function call<T>(method: string, url: string, body?: unknown): Promise<T> 
 }
 
 export const api = {
-  me: () => call<User>('GET', '/api/me'),
-  login: (username: string, password: string) => call<User>('POST', '/api/login', { username, password }),
-  register: (username: string, password: string) => call<User>('POST', '/api/register', { username, password }),
+  me: () => call<User>('GET', '/api/me').then(withDefaults),
+  login: (username: string, password: string) => call<User>('POST', '/api/login', { username, password }).then(withDefaults),
+  register: (username: string, password: string) =>
+    call<User>('POST', '/api/register', { username, password }).then(withDefaults),
   logout: () => call('POST', '/api/logout'),
   progress: () => call<Record<string, JobProgress>>('GET', '/api/progress'),
   saveProgress: (jobId: number, p: JobProgress) => call('PUT', `/api/progress/${jobId}`, p),

@@ -95,6 +95,8 @@ app.put('/api/settings', auth, (req, res) => {
   const settings = {
     maxRarity: [0, 1, 2].includes(s.maxRarity) ? s.maxRarity : 1,
     bonus: clampInt(s.bonus, 0, 500, 0),
+    sort: ['default', 'alpha', 'level'].includes(s.sort) ? s.sort : 'default',
+    hidden: Array.isArray(s.hidden) ? s.hidden.filter(Number.isInteger).slice(0, 100) : [],
   };
   db.prepare('UPDATE users SET settings = ? WHERE id = ?').run(JSON.stringify(settings), req.userId);
   res.json(settings);

@@ -28,9 +28,14 @@ export function App() {
     api.progress().then(setProgress);
   }, [user]);
 
+  // Sélectionne le premier métier visible si aucun ne l'est (ou si celui en cours vient d'être caché).
+  const hidden = user?.settings.hidden;
   useEffect(() => {
-    if (data && selected === null) setSelected(data.jobs[0].id);
-  }, [data, selected]);
+    if (!data) return;
+    if (selected !== null && !hidden?.includes(selected)) return;
+    const first = data.jobs.find((j) => !hidden?.includes(j.id));
+    if (first) setSelected(first.id);
+  }, [data, selected, hidden]);
 
   const rarity = useMemo(() => (data ? createRarityResolver(data) : null), [data]);
 
@@ -119,6 +124,7 @@ export function App() {
           progress={progress}
           selected={job.id}
           onSelect={setSelected}
+          onSettingsChange={updateSettings}
         />
         <JobPanel
           key={job.id}
