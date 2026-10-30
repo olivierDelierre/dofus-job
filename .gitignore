@@ -3,3 +3,4 @@ dist
 /public/img/items
 /server/*.db*
 .dev-credentials
+/public/img/monsters

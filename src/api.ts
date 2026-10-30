@@ -5,12 +5,14 @@ export type JobSort = 'default' | 'alpha' | 'level';
 export interface Settings {
   maxRarity: Rarity;
   bonus: number;
+  /** Fabriquer soi-même les intermédiaires du métier (planches…) et compter leur XP. */
+  craftSubs: boolean;
   sort: JobSort;
   /** Métiers masqués de la liste. */
   hidden: number[];
 }
 
-export const DEFAULT_SETTINGS: Settings = { maxRarity: 1, bonus: 0, sort: 'default', hidden: [] };
+export const DEFAULT_SETTINGS: Settings = { maxRarity: 1, bonus: 0, craftSubs: true, sort: 'default', hidden: [] };
 
 // Les comptes créés avant l'ajout d'un réglage n'ont pas toutes les clés.
 const withDefaults = (u: User): User => ({ ...u, settings: { ...DEFAULT_SETTINGS, ...u.settings } });

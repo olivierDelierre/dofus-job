@@ -38,10 +38,11 @@ export function JobList({ data, rarity, settings, progress, selected, onSelect, 
           maxRarity: settings.maxRarity,
           excluded: new Set(p.excluded),
           bonus: settings.bonus,
+          craftSubs: settings.craftSubs,
         });
         return { job, p, target, plan };
       }),
-    [data, rarity, settings.maxRarity, settings.bonus, progress],
+    [data, rarity, settings.maxRarity, settings.bonus, settings.craftSubs, progress],
   );
 
   const sorted = useMemo(() => {

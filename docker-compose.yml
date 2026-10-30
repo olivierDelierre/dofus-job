@@ -1,0 +1,15 @@
+# Image publiée par la CI GitHub (onglet Packages du dépôt) : remplace OWNER par ton pseudo GitHub, en minuscules.
+# Pour construire en local à la place : `docker compose up -d --build` (garde la section build).
+services:
+  atelier:
+    image: ghcr.io/OWNER/dofus-job:latest
+    build: .
+    container_name: dofus-atelier
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      # Base SQLite (comptes et progression). Sur TrueNAS, pointe vers un dataset, ex. /mnt/tank/apps/dofus-atelier
+      - ./data:/data
+    environment:
+      - TZ=Europe/Paris

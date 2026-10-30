@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import type { JobProgress, Settings } from '../api';
 import { planJob } from '../lib/planner';
-import { RARITY_LABEL, type RarityResolver } from '../lib/rarity';
+import type { RarityResolver } from '../lib/rarity';
+import { ItemIcon } from './ItemIcon';
 import type { GameData, Job } from '../lib/types';
 import { levelToXp, MAX_LEVEL, xpRatio } from '../lib/xp';
 
@@ -19,17 +20,6 @@ const STEPS = [1, 5, 10, 20];
 const fmt = (n: number) => n.toLocaleString('fr-FR');
 const clampLevel = (v: string) => Math.min(MAX_LEVEL, Math.max(1, Math.round(Number(v)) || 1));
 
-function ItemIcon({ data, rarity, id, qty }: { data: GameData; rarity: RarityResolver; id: number; qty?: number }) {
-  const item = data.items[id];
-  const r = rarity.ofItem(id);
-  return (
-    <span className={`item r${r.rarity}`} title={`${item?.name ?? id} — ${RARITY_LABEL[r.rarity]} · ${r.reason}`}>
-      <img src={`/img/items/${item?.iconId}.png`} alt={item?.name} loading="lazy" />
-      {qty !== undefined && <b>{fmt(qty)}</b>}
-    </span>
-  );
-}
-
 export function JobPanel({ job, data, rarity, settings, progress, onChange }: Props) {
   const [tab, setTab] = useState<'plan' | 'courses'>('plan');
   const target = progress.target ?? MAX_LEVEL;
@@ -44,6 +34,7 @@ export function JobPanel({ job, data, rarity, settings, progress, onChange }: Pr
         maxRarity: settings.maxRarity,
         excluded,
         bonus: settings.bonus,
+        craftSubs: settings.craftSubs,
       }),
     [job.id, data, rarity, progress.level, target, progress.step, settings, excluded],
   );
@@ -111,7 +102,7 @@ export function JobPanel({ job, data, rarity, settings, progress, onChange }: Pr
           <span>crafts au total</span>
         </div>
         <div>
-          <strong>{plan.segments.length}</strong>
+          <strong>{new Set(plan.segments.map((s) => s.recipe.id)).size}</strong>
           <span>recettes différentes</span>
         </div>
         <div>
@@ -163,7 +154,7 @@ export function JobPanel({ job, data, rarity, settings, progress, onChange }: Pr
                           <div className="seg-name">{item?.name}</div>
                           <div className="muted small">
                             Niv. {s.recipe.level} · {data.types[s.recipe.typeId]?.name}
-                            {ratio !== 1 && ` · XP ×${ratio}`} · {fmt(s.firstCraftXp)} XP/craft au départ
+                            {ratio !== 1 && ` · XP ×${ratio}`} · {fmt(s.firstUnitXp)} XP/exemplaire au départ
                           </div>
                         </div>
                       </div>
@@ -172,9 +163,26 @@ export function JobPanel({ job, data, rarity, settings, progress, onChange }: Pr
                           <ItemIcon key={id} data={data} rarity={rarity} id={id} qty={q} />
                         ))}
                       </div>
+                      {s.subCrafts.size > 0 && (
+                        <div className="seg-subs">
+                          <span className="muted small">À fabriquer avant :</span>
+                          {[...s.subCrafts].map(([rid, n]) => {
+                            const sub = data.recipes.find((r) => r.id === rid)!;
+                            return (
+                              <span key={rid} className="seg-sub">
+                                <ItemIcon data={data} rarity={rarity} id={sub.resultId} />
+                                <span>
+                                  <strong>×{fmt(n)}</strong> {data.items[sub.resultId]?.name}
+                                </span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                     <div className="seg-count">
-                      <strong>×{fmt(s.crafts)}</strong>
+                      <strong>×{fmt(s.units)}</strong>
+                      {s.crafts !== s.units && <span className="muted small">{fmt(s.crafts)} crafts en tout</span>}
                       <button className="ghost small" onClick={() => exclude(s.recipe.id)} title="Je ne veux pas faire cette recette">
                         Exclure
                       </button>

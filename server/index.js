@@ -15,6 +15,8 @@ const COOKIE = 'dj_session';
 
 const db = openDb(process.env.DB_PATH ?? join(ROOT, 'server/data.db'));
 const app = express();
+// Derrière un reverse proxy (TrueNAS, Traefik, Nginx…), req.secure suit X-Forwarded-Proto.
+app.set('trust proxy', true);
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
 
@@ -23,14 +25,15 @@ async function hashPassword(password, salt = randomBytes(16).toString('hex')) {
   return { hash, salt };
 }
 
-function startSession(res, userId) {
+function startSession(req, res, userId) {
   const token = randomBytes(32).toString('hex');
   const expires = Date.now() + SESSION_DAYS * 86400_000;
   db.prepare('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)').run(token, userId, expires);
   res.cookie(COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production' && process.env.INSECURE_COOKIE !== '1',
+    // Cookie sécurisé seulement en HTTPS : l'app doit rester utilisable en HTTP sur le réseau local.
+    secure: req.secure,
     maxAge: SESSION_DAYS * 86400_000,
   });
 }
@@ -53,6 +56,8 @@ function validCredentials(body) {
   return { username, password };
 }
 
+app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
 app.post('/api/register', async (req, res) => {
   const c = validCredentials(req.body);
   if (c.error) return res.status(400).json({ error: c.error });
@@ -63,7 +68,7 @@ app.post('/api/register', async (req, res) => {
   const { lastInsertRowid } = db
     .prepare('INSERT INTO users (username, password_hash, salt, created_at) VALUES (?, ?, ?, ?)')
     .run(c.username, hash, salt, Date.now());
-  startSession(res, Number(lastInsertRowid));
+  startSession(req, res, Number(lastInsertRowid));
   res.json(publicUser(db.prepare('SELECT * FROM users WHERE id = ?').get(lastInsertRowid)));
 });
 
@@ -75,7 +80,7 @@ app.post('/api/login', async (req, res) => {
   if (!user || !timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(user.password_hash, 'hex'))) {
     return res.status(401).json({ error: 'Pseudo ou mot de passe incorrect' });
   }
-  startSession(res, user.id);
+  startSession(req, res, user.id);
   res.json(publicUser(user));
 });
 
@@ -95,6 +100,7 @@ app.put('/api/settings', auth, (req, res) => {
   const settings = {
     maxRarity: [0, 1, 2].includes(s.maxRarity) ? s.maxRarity : 1,
     bonus: clampInt(s.bonus, 0, 500, 0),
+    craftSubs: s.craftSubs !== false,
     sort: ['default', 'alpha', 'level'].includes(s.sort) ? s.sort : 'default',
     hidden: Array.isArray(s.hidden) ? s.hidden.filter(Number.isInteger).slice(0, 100) : [],
   };

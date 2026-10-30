@@ -1,7 +1,7 @@
 // Récupère les données Dofus 3 depuis l'API DofusDB et produit public/data/game.json
 // + les icônes (métiers, objets) dans public/img.
-// Usage : node scripts/fetch-data.mjs [--no-icons]
-import { mkdir, writeFile, access } from 'node:fs/promises';
+// Usage : node scripts/fetch-data.mjs [--no-icons | --icons-only]
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -50,6 +50,13 @@ const fr = (name) => name?.fr ?? name?.en ?? '';
 
 async function main() {
   const withIcons = !process.argv.includes('--no-icons');
+  // --icons-only : réutilise public/data/game.json et ne télécharge que les images (build Docker).
+  if (process.argv.includes('--icons-only')) {
+    const game = JSON.parse(await readFile(join(ROOT, 'public/data/game.json'), 'utf8'));
+    await downloadIcons(game);
+    console.log('Terminé.');
+    return;
+  }
 
   console.log('Métiers…');
   const jobsRaw = (await get('/jobs?$limit=50')).data;
@@ -120,6 +127,9 @@ async function main() {
     const m = await get(`/monsters/${id}`).catch(() => null);
     if (!m) return;
     monsters[id] = {
+      id,
+      name: fr(m.name),
+      gfxId: m.gfxId,
       boss: !!m.isBoss,
       miniBoss: !!m.isMiniBoss,
       quest: !!m.isQuestMonster,
@@ -152,6 +162,11 @@ async function main() {
     it.commonDroppers = common;
     it.bossDrop = bossBest;
     it.anyDropper = it.dropMonsterIds.length > 0;
+    // Monstres qui lâchent l'objet, avec le taux de base (grade 1), du plus généreux au moins généreux.
+    it.drops = it.dropMonsterIds
+      .map((mid) => [mid, monsters[mid]?.drops[it.id] ?? 0])
+      .filter(([mid, rate]) => monsters[mid] && rate > 0)
+      .sort((a, b) => b[1] - a[1]);
     it.tokenShop = tokenItems.has(it.id);
     delete it.dropMonsterIds;
   }
@@ -163,12 +178,23 @@ async function main() {
     items: Object.fromEntries(items),
     recipes,
     subRecipes,
+    monsters: Object.fromEntries(
+      [...new Set([...items.values()].flatMap((it) => it.drops.map(([mid]) => mid)))].map((mid) => {
+        const { drops, ...m } = monsters[mid];
+        return [mid, m];
+      }),
+    ),
   };
   await mkdir(join(ROOT, 'public/data'), { recursive: true });
   await writeFile(join(ROOT, 'public/data/game.json'), JSON.stringify(game));
-  console.log(`public/data/game.json : ${recipes.length} recettes, ${items.size} objets`);
+  console.log(`public/data/game.json : ${recipes.length} recettes, ${items.size} objets, ${Object.keys(game.monsters).length} monstres`);
 
-  if (!withIcons) return;
+  if (withIcons) await downloadIcons(game);
+  console.log('Terminé.');
+}
+
+/** Télécharge les icônes de métiers, d'objets et de monstres référencés par game.json (déjà présentes = ignorées). */
+async function downloadIcons(game) {
   console.log('Icônes…');
   const dl = async (url, file) => {
     try {
@@ -180,14 +206,15 @@ async function main() {
     await mkdir(dirname(file), { recursive: true });
     await writeFile(file, Buffer.from(await res.arrayBuffer()));
   };
-  await pool(jobs, 4, (j) => dl(`${API}/img/jobs/${j.iconId}.png`, join(ROOT, `public/img/jobs/${j.id}.png`)));
-  const iconIds = [...new Set([...items.values()].map((i) => i.iconId))];
+  await pool(game.jobs, 4, (j) => dl(`${API}/img/jobs/${j.iconId}.png`, join(ROOT, `public/img/jobs/${j.id}.png`)));
+  const iconIds = [...new Set(Object.values(game.items).map((i) => i.iconId))];
   let done = 0;
   await pool(iconIds, 16, async (id) => {
     await dl(`${API}/img/items/${id}.png`, join(ROOT, `public/img/items/${id}.png`));
     if (++done % 500 === 0) console.log(`  ${done}/${iconIds.length}`);
   });
-  console.log('Terminé.');
+  const gfxIds = [...new Set(Object.values(game.monsters).map((m) => m.gfxId))];
+  await pool(gfxIds, 16, (id) => dl(`${API}/img/monsters/${id}.png`, join(ROOT, `public/img/monsters/${id}.png`)));
 }
 
 main().catch((err) => {

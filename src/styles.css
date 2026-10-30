@@ -534,6 +534,28 @@ button {
   flex-wrap: wrap;
   gap: 5px;
 }
+.seg-subs {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+}
+.seg-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.seg-sub .item {
+  width: 32px;
+  height: 32px;
+}
+.seg-sub .item img {
+  width: 26px;
+  height: 26px;
+}
 .seg-count {
   display: grid;
   justify-items: end;
@@ -576,6 +598,197 @@ button {
 }
 .item.r2 {
   border-color: var(--r2);
+}
+
+/* Fiche objet au survol */
+.item {
+  cursor: help;
+}
+.item:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.item-card {
+  position: fixed;
+  z-index: 50;
+  width: 320px;
+  max-width: calc(100vw - 16px);
+  padding: 14px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #2e281e 0%, #1d1913 100%);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+  animation: card-in 0.12s ease-out;
+  font-size: 13px;
+}
+.item-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  border-radius: 14px 14px 0 0;
+  background: var(--r0);
+}
+.item-card.r1::before {
+  background: var(--r1);
+}
+.item-card.r2::before {
+  background: var(--r2);
+}
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.item-card header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.item-card header .item {
+  width: 48px;
+  height: 48px;
+}
+.item-card header .item img {
+  width: 42px;
+  height: 42px;
+}
+.item-card-name {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--gold-2);
+  line-height: 1.2;
+}
+.item-card-sub {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.item-card-reason {
+  margin-top: 10px;
+  color: var(--text);
+}
+.item-card-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.item-card-sources span {
+  font-size: 11.5px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(143, 191, 74, 0.12);
+  color: #cfe2b0;
+}
+.item-card-title {
+  margin: 12px 0 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.drops {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.drops li {
+  display: grid;
+  grid-template-columns: 38px 1fr 76px;
+  gap: 10px;
+  align-items: center;
+  padding: 4px 6px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.mob {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: radial-gradient(circle at 50% 60%, #3a3326, #1b1812);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.mob img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+.mob-fallback {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  color: var(--muted);
+}
+.drop-info {
+  display: grid;
+  min-width: 0;
+}
+.drop-name {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  min-width: 0;
+}
+.drop-name span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.drop-name em {
+  flex: none;
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(217, 166, 64, 0.18);
+  color: var(--gold-2);
+  vertical-align: 1px;
+}
+.drops li.archi .drop-name em,
+.drops li.quête .drop-name em {
+  background: rgba(208, 88, 63, 0.2);
+  color: #ff9a85;
+}
+.drop-meta {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.drop-rate {
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+}
+.drop-rate strong {
+  font-variant-numeric: tabular-nums;
+}
+.rate-bar {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg);
+}
+.rate-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--green), var(--gold));
+}
+.item-card-more {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .shopping {

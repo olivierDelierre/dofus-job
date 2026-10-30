@@ -90,6 +90,14 @@ export function App() {
               <option value={2}>Tout, même rares</option>
             </select>
           </label>
+          <label className="check" title="Fabriquer soi-même les ingrédients que le métier sait faire (ex. planches pour les substrats du Bûcheron) : leur XP et leurs crafts sont comptés.">
+            <input
+              type="checkbox"
+              checked={user.settings.craftSubs}
+              onChange={(e) => updateSettings({ ...user.settings, craftSubs: e.target.checked })}
+            />
+            Crafter les intermédiaires
+          </label>
           <label title="Bonus Almanax, événement, etc.">
             Bonus XP
             <span className="suffix-input">
