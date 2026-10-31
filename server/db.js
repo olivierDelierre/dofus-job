@@ -1,7 +1,17 @@
 import { DatabaseSync } from 'node:sqlite';
 
 export function openDb(path) {
-  const db = new DatabaseSync(path);
+  let db;
+  try {
+    db = new DatabaseSync(path);
+  } catch (err) {
+    const uid = process.getuid?.() ?? '?';
+    throw new Error(
+      `Impossible d'ouvrir la base ${path} (${err.message}). Le dossier doit être accessible en écriture pour l'UID ${uid} ` +
+        '(en Docker : PUID/PGID, ou propriétaire du volume monté sur /data).',
+      { cause: err },
+    );
+  }
   db.exec(`
     PRAGMA journal_mode = WAL;
     PRAGMA foreign_keys = ON;

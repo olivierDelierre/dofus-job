@@ -13,3 +13,6 @@ services:
       - ./data:/data
     environment:
       - TZ=Europe/Paris
+      # Propriétaire des fichiers de /data (568 = « apps » sur TrueNAS SCALE, 1000 par défaut)
+      - PUID=1000
+      - PGID=1000

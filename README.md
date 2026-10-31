@@ -31,9 +31,12 @@ services:
       - /mnt/tank/apps/dofus-atelier:/data
     environment:
       - TZ=Europe/Paris
+      # Utilisateur propriétaire des données (568 = « apps » sur TrueNAS SCALE)
+      - PUID=568
+      - PGID=568
 ```
 
-Le dataset doit être accessible en écriture à l'utilisateur `node` du conteneur (UID 1000). L'app répond ensuite sur `http://<ip-du-nas>:3001`. Le cookie de session passe en `Secure` automatiquement derrière un reverse proxy HTTPS (`X-Forwarded-Proto`).
+Le conteneur démarre en root, donne le dossier `/data` à `PUID:PGID` (1000 par défaut), puis lance l'app sous cet utilisateur : pas besoin de régler les permissions du dataset à la main. L'app répond ensuite sur `http://<ip-du-nas>:3001`. Le cookie de session passe en `Secure` automatiquement derrière un reverse proxy HTTPS (`X-Forwarded-Proto`).
 
 **En local** :
 

@@ -6,6 +6,7 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openDb } from './db.js';
+import { prepareDataDir } from './privileges.js';
 
 const scrypt = promisify(scryptCb);
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -13,7 +14,9 @@ const PORT = Number(process.env.API_PORT ?? 3001);
 const SESSION_DAYS = 30;
 const COOKIE = 'dj_session';
 
-const db = openDb(process.env.DB_PATH ?? join(ROOT, 'server/data.db'));
+const DB_PATH = process.env.DB_PATH ?? join(ROOT, 'server/data.db');
+prepareDataDir(dirname(DB_PATH));
+const db = openDb(DB_PATH);
 const app = express();
 // Derrière un reverse proxy (TrueNAS, Traefik, Nginx…), req.secure suit X-Forwarded-Proto.
 app.set('trust proxy', true);

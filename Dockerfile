@@ -13,13 +13,15 @@ WORKDIR /app
 ENV NODE_ENV=production \
     API_PORT=3001 \
     DB_PATH=/data/data.db \
-    NODE_NO_WARNINGS=1
+    NODE_NO_WARNINGS=1 \
+    PUID=1000 \
+    PGID=1000
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY server ./server
 COPY --from=build /app/dist ./dist
 RUN mkdir -p /data && chown node:node /data
-USER node
+# Démarre en root pour rendre /data à PUID:PGID, puis le serveur abandonne les droits root (server/privileges.js).
 VOLUME /data
 EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
