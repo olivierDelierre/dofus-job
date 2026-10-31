@@ -16,14 +16,14 @@ Production : `npm run build && npm start` (sert `dist/` et l'API sur `API_PORT`,
 
 L'image embarque le front compilé, l'API et toutes les icônes (téléchargées depuis DofusDB au build). La base SQLite vit dans le volume `/data`.
 
-**Avec l'image publiée par GitHub** : chaque push sur `main`/`master` lance `.github/workflows/docker.yml`, qui teste puis publie `ghcr.io/<pseudo>/dofus-job:latest` (amd64 + arm64). Après le premier build, passe le package en public (GitHub → Packages → dofus-job → Package settings → Change visibility), sinon TrueNAS devra s'authentifier sur ghcr.io.
+**Avec l'image publiée par GitHub** : chaque push sur `main`/`master` lance `.github/workflows/docker.yml`, qui teste puis publie `ghcr.io/olivierdelierre/dofus-job:latest` (amd64 + arm64). Après le premier build, passe le package en public (GitHub → Packages → dofus-job → Package settings → Change visibility), sinon TrueNAS devra s'authentifier sur ghcr.io.
 
-**Sur TrueNAS SCALE** (Apps → Discover Apps → ⋮ → Install via YAML), colle `docker-compose.yml` en remplaçant `OWNER` par ton pseudo GitHub, en supprimant la ligne `build: .` et en pointant le volume vers un dataset :
+**Sur TrueNAS SCALE** (Apps → Discover Apps → ⋮ → Install via YAML), colle `docker-compose.yml` en supprimant la ligne `build: .` et en pointant le volume vers un dataset :
 
 ```yaml
 services:
   atelier:
-    image: ghcr.io/OWNER/dofus-job:latest
+    image: ghcr.io/olivierdelierre/dofus-job:latest
     restart: unless-stopped
     ports:
       - "3001:3001"
