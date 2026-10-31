@@ -2,13 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import type { Settings } from '../api';
 
 interface Props {
-  username: string;
   settings: Settings;
   onChange: (s: Settings) => void;
-  onLogout: () => void;
 }
 
-export function SettingsMenu({ username, settings, onChange, onLogout }: Props) {
+export function SettingsMenu({ settings, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
 
@@ -37,11 +35,6 @@ export function SettingsMenu({ username, settings, onChange, onLogout }: Props) 
 
       {open && (
         <div className="settings-pop" role="dialog" aria-label="Paramètres">
-          <div className="settings-pop-head">
-            <span className="muted small">Connecté en tant que</span>
-            <strong>{username}</strong>
-          </div>
-
           <label className="field">
             Ingrédients autorisés
             <select value={settings.maxRarity} onChange={(e) => onChange({ ...settings, maxRarity: Number(e.target.value) as 0 | 1 | 2 })}>
@@ -74,10 +67,6 @@ export function SettingsMenu({ username, settings, onChange, onLogout }: Props) 
               %
             </span>
           </label>
-
-          <button className="ghost logout" onClick={onLogout}>
-            Déconnexion
-          </button>
         </div>
       )}
     </div>

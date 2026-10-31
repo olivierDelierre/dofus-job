@@ -95,12 +95,18 @@ export function App() {
         <span className={`save-state ${saveState}`}>
           {saveState === 'saving' ? 'Sauvegarde…' : saveState === 'saved' ? 'Sauvegardé' : saveState === 'error' ? 'Erreur de sauvegarde' : ''}
         </span>
-        <SettingsMenu
-          username={user.username}
-          settings={user.settings}
-          onChange={updateSettings}
-          onLogout={() => api.logout().then(() => setUser(null))}
-        />
+        <SettingsMenu settings={user.settings} onChange={updateSettings} />
+        <div className="user">
+          <span className="user-avatar" title={user.username} aria-hidden>
+            {user.username[0].toUpperCase()}
+          </span>
+          <span className="user-name">{user.username}</span>
+          <button className="icon-btn" aria-label="Déconnexion" title="Déconnexion" onClick={() => api.logout().then(() => setUser(null))}>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+            </svg>
+          </button>
+        </div>
       </header>
 
       <main className="layout">
