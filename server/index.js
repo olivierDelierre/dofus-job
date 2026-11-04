@@ -1,17 +1,17 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import { randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
-import { promisify } from 'node:util';
+import { randomBytes } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openDb } from './db.js';
 import { prepareDataDir } from './privileges.js';
 
-const scrypt = promisify(scryptCb);
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.API_PORT ?? 3001);
-const SESSION_DAYS = 30;
+// « Se souvenir de moi » : 90 jours. Sinon cookie de session (oublié à la fermeture du navigateur), 2 jours côté serveur.
+const SESSION_REMEMBER_DAYS = 90;
+const SESSION_SHORT_DAYS = 2;
 const COOKIE = 'dj_session';
 
 const DB_PATH = process.env.DB_PATH ?? join(ROOT, 'server/data.db');
@@ -23,21 +23,16 @@ app.set('trust proxy', true);
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
 
-async function hashPassword(password, salt = randomBytes(16).toString('hex')) {
-  const hash = (await scrypt(password, salt, 64)).toString('hex');
-  return { hash, salt };
-}
-
-function startSession(req, res, userId) {
+function startSession(req, res, userId, remember) {
   const token = randomBytes(32).toString('hex');
-  const expires = Date.now() + SESSION_DAYS * 86400_000;
-  db.prepare('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)').run(token, userId, expires);
+  const ms = (remember ? SESSION_REMEMBER_DAYS : SESSION_SHORT_DAYS) * 86400_000;
+  db.prepare('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)').run(token, userId, Date.now() + ms);
   res.cookie(COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
     // Cookie sécurisé seulement en HTTPS : l'app doit rester utilisable en HTTP sur le réseau local.
     secure: req.secure,
-    maxAge: SESSION_DAYS * 86400_000,
+    ...(remember ? { maxAge: ms } : {}),
   });
 }
 
@@ -51,39 +46,43 @@ function auth(req, res, next) {
 
 const publicUser = (u) => ({ id: u.id, username: u.username, settings: JSON.parse(u.settings) });
 
-function validCredentials(body) {
+function validUsername(body) {
   const username = String(body?.username ?? '').trim();
-  const password = String(body?.password ?? '');
   if (!/^[\p{L}\p{N}_\-.]{3,24}$/u.test(username)) return { error: 'Pseudo : 3 à 24 caractères (lettres, chiffres, _ - .)' };
-  if (password.length < 6 || password.length > 200) return { error: 'Mot de passe : 6 caractères minimum' };
-  return { username, password };
+  return { username };
 }
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
-app.post('/api/register', async (req, res) => {
-  const c = validCredentials(req.body);
+// Comptes sans mot de passe : la liste des pseudos est publique, l'écran de connexion propose de choisir son profil.
+app.get('/api/users', (_req, res) => {
+  res.json(
+    db
+      .prepare('SELECT username FROM users ORDER BY username COLLATE NOCASE')
+      .all()
+      .map((u) => u.username),
+  );
+});
+
+app.post('/api/register', (req, res) => {
+  const c = validUsername(req.body);
   if (c.error) return res.status(400).json({ error: c.error });
   if (db.prepare('SELECT 1 FROM users WHERE username = ? COLLATE NOCASE').get(c.username)) {
     return res.status(409).json({ error: 'Ce pseudo est déjà pris' });
   }
-  const { hash, salt } = await hashPassword(c.password);
+  // Les colonnes password_hash / salt restent pour les bases existantes, mais ne servent plus.
   const { lastInsertRowid } = db
-    .prepare('INSERT INTO users (username, password_hash, salt, created_at) VALUES (?, ?, ?, ?)')
-    .run(c.username, hash, salt, Date.now());
-  startSession(req, res, Number(lastInsertRowid));
+    .prepare("INSERT INTO users (username, password_hash, salt, created_at) VALUES (?, '', '', ?)")
+    .run(c.username, Date.now());
+  startSession(req, res, Number(lastInsertRowid), req.body?.remember !== false);
   res.json(publicUser(db.prepare('SELECT * FROM users WHERE id = ?').get(lastInsertRowid)));
 });
 
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', (req, res) => {
   const username = String(req.body?.username ?? '').trim();
-  const password = String(req.body?.password ?? '');
   const user = db.prepare('SELECT * FROM users WHERE username = ? COLLATE NOCASE').get(username);
-  const { hash } = await hashPassword(password, user?.salt ?? 'x'.repeat(32));
-  if (!user || !timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(user.password_hash, 'hex'))) {
-    return res.status(401).json({ error: 'Pseudo ou mot de passe incorrect' });
-  }
-  startSession(req, res, user.id);
+  if (!user) return res.status(404).json({ error: 'Aucun compte avec ce pseudo' });
+  startSession(req, res, user.id, req.body?.remember !== false);
   res.json(publicUser(user));
 });
 
@@ -115,10 +114,7 @@ app.get('/api/progress', auth, (req, res) => {
   const rows = db.prepare('SELECT * FROM progress WHERE user_id = ?').all(req.userId);
   res.json(
     Object.fromEntries(
-      rows.map((r) => [
-        r.job_id,
-        { level: r.level, target: r.target, step: r.step, excluded: JSON.parse(r.excluded), updatedAt: r.updated_at },
-      ]),
+      rows.map((r) => [r.job_id, { level: r.level, target: r.target, step: r.step, excluded: JSON.parse(r.excluded), updatedAt: r.updated_at }]),
     ),
   );
 });

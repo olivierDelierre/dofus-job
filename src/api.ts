@@ -45,9 +45,10 @@ async function call<T>(method: string, url: string, body?: unknown): Promise<T> 
 
 export const api = {
   me: () => call<User>('GET', '/api/me').then(withDefaults),
-  login: (username: string, password: string) => call<User>('POST', '/api/login', { username, password }).then(withDefaults),
-  register: (username: string, password: string) =>
-    call<User>('POST', '/api/register', { username, password }).then(withDefaults),
+  /** Pseudos des comptes existants, proposés sur l'écran de connexion. */
+  users: () => call<string[]>('GET', '/api/users'),
+  login: (username: string, remember: boolean) => call<User>('POST', '/api/login', { username, remember }).then(withDefaults),
+  register: (username: string, remember: boolean) => call<User>('POST', '/api/register', { username, remember }).then(withDefaults),
   logout: () => call('POST', '/api/logout'),
   progress: () => call<Record<string, JobProgress>>('GET', '/api/progress'),
   saveProgress: (jobId: number, p: JobProgress) => call('PUT', `/api/progress/${jobId}`, p),

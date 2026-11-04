@@ -1,89 +1,102 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { api, type User } from '../api';
-import { Tabs } from './Tabs';
 
-const SHOWCASE = [2, 24, 28, 36, 26, 41, 11, 13, 15, 16, 27, 60, 65];
-
+/**
+ * Écran de connexion posé sur l'app floutée : on choisit son profil dans la liste des comptes,
+ * ou on en crée un avec un simple pseudo (pas de mot de passe).
+ */
 export function Login({ onLogged }: { onLogged: (u: User) => void }) {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [users, setUsers] = useState<string[] | null>(null);
+  const [name, setName] = useState('');
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const card = useRef<HTMLDivElement>(null);
 
-  async function submit(e: FormEvent) {
-    e.preventDefault();
+  const load = () => api.users().then(setUsers, () => setUsers([])); // sans liste, on propose quand même la création
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  // Focus sur le premier profil, ou sur le champ de création s'il n'y a pas encore de compte.
+  useEffect(() => {
+    if (users) card.current?.querySelector<HTMLElement>('.auth-user, .auth-new input')?.focus();
+  }, [users]);
+
+  async function enter(kind: 'login' | 'register', username: string) {
     setBusy(true);
     setError('');
     try {
-      onLogged(await (mode === 'login' ? api.login : api.register)(username, password));
+      onLogged(await api[kind](username, remember));
     } catch (err) {
       setError((err as Error).message);
+      if ((err as { status?: number }).status === 404) load(); // le profil a disparu : on rafraîchit la liste
     } finally {
       setBusy(false);
     }
   }
 
+  function create(e: FormEvent) {
+    e.preventDefault();
+    enter('register', name.trim());
+  }
+
+  const hasUsers = !!users?.length;
+
   return (
-    <div className="login-page">
-      <div className="login-card br-card">
-        <div className="login-icons">
-          {SHOWCASE.map((id) => (
-            <img key={id} src={`/img/jobs/${id}.png`} alt="" />
-          ))}
-        </div>
-        <div>
-          <h1>Atelier</h1>
-          <p className="muted small" style={{ margin: 0 }}>
-            Métiers Dofus
+    <div className="auth" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+      <div className="auth-card br-glass" ref={card}>
+        <h2 id="auth-title">Bienvenue à l'Atelier</h2>
+        {hasUsers && (
+          <section>
+            <p>Qui es-tu ?</p>
+            <div className="auth-list" role="list">
+              {users.map((u) => (
+                <button key={u} type="button" role="listitem" className="auth-user" disabled={busy} onClick={() => enter('login', u)}>
+                  <span className="avatar" aria-hidden>
+                    {[...u][0].toUpperCase()}
+                  </span>
+                  <span className="auth-user-name">{u}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+        <form onSubmit={create}>
+          <p>
+            {hasUsers
+              ? 'Ou crée un nouveau compte (un pseudo suffit, pas de mot de passe) :'
+              : 'Crée ton compte : un pseudo suffit, pas de mot de passe.'}
           </p>
-        </div>
-
-        <Tabs
-          label="Connexion ou création de compte"
-          value={mode}
-          onChange={setMode}
-          items={[
-            { value: 'login', label: 'Connexion' },
-            { value: 'register', label: 'Créer un compte' },
-          ]}
-        />
-
-        <form onSubmit={submit}>
-          <label className="br-field">
-            <span className="br-field__label">Pseudo</span>
+          <div className="auth-new">
             <input
               className="br-input"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoComplete="username"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Nouveau pseudo"
+              aria-label="Nouveau pseudo"
+              autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
               required
               minLength={3}
               maxLength={24}
             />
-          </label>
-          <label className="br-field">
-            <span className="br-field__label">Mot de passe</span>
-            <input
-              className="br-input"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-              required
-              minLength={6}
-            />
-          </label>
-          {error && (
-            <div className="callout callout--danger form-error" role="alert">
-              <strong>Erreur</strong>
-              <span>{error}</span>
-            </div>
-          )}
-          <button className="br-btn br-btn--primary" disabled={busy}>
-            {mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
-          </button>
+            <button className="br-btn br-btn--secondary" disabled={busy}>
+              Créer
+            </button>
+          </div>
         </form>
+        <label className="br-check">
+          <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+          <span>Se souvenir de moi</span>
+        </label>
+        {error && (
+          <p className="auth-err" role="alert">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );

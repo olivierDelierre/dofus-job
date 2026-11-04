@@ -210,8 +210,8 @@ button {
 .icon-btn {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   flex: none;
   border-radius: var(--radius-md);
   color: var(--ink);
@@ -433,50 +433,96 @@ select.br-input {
 }
 
 /* Connexion */
-.login-page {
-  min-height: 100vh;
+.auth {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
   display: grid;
   place-items: center;
-  padding: var(--space-6) var(--space-4);
-  background: radial-gradient(60% 50% at 80% 10%, var(--surface-tint), transparent),
-    radial-gradient(50% 40% at 10% 90%, var(--brand-soft), transparent), var(--surface);
+  padding: var(--space-4);
+  background: var(--scrim);
+  -webkit-backdrop-filter: blur(var(--blur-md));
+  backdrop-filter: blur(var(--blur-md));
 }
-.login-card {
-  width: min(440px, 100%);
+.auth-card {
+  width: min(400px, 100%);
+  max-height: calc(100dvh - 2 * var(--space-4));
+  overflow-y: auto;
+  padding: var(--space-8) var(--space-6);
   display: grid;
-  gap: var(--space-6);
-  box-shadow: var(--shadow-lg);
+  gap: var(--space-4);
   border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(160%);
+  backdrop-filter: blur(var(--blur-lg)) saturate(160%);
 }
-.login-icons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+.auth-card h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 30px;
+  font-weight: 700;
 }
-.login-icons img {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-sm);
-  background: var(--surface-tint);
-}
-.login-card h1 {
-  font-size: 32px;
-  line-height: 40px;
-  letter-spacing: -0.01em;
-}
-.login-card form {
-  display: grid;
-  gap: var(--space-5);
-}
-.login-card .br-btn--primary {
-  margin-top: var(--space-2);
-}
-.form-error {
+.auth-card p {
+  margin: 0;
+  color: var(--ink-muted);
   font-size: 14px;
   line-height: 22px;
 }
-.form-error strong {
-  color: var(--danger);
+.auth-list {
+  display: grid;
+  gap: var(--space-2);
+  max-height: 38vh;
+  overflow-y: auto;
+  margin: var(--space-2) calc(-1 * var(--space-1)) 0;
+  padding: var(--space-1);
+}
+.auth-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  cursor: pointer;
+  background: var(--surface-raised);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 22px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.auth-user:hover {
+  background: var(--surface-tint);
+  border-color: var(--brand);
+}
+.auth-user:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.auth-user .avatar {
+  width: 34px;
+  height: 34px;
+  font-size: 14px;
+}
+.auth-user-name {
+  overflow-wrap: anywhere;
+}
+.auth-card form {
+  display: grid;
+  gap: var(--space-2);
+}
+.auth-new {
+  display: flex;
+  gap: var(--space-2);
+}
+.auth-new .br-input {
+  flex: 1;
+  min-width: 0;
+}
+.auth-err {
+  color: var(--danger) !important;
+  font-weight: 600;
 }
 
 /* Application */
@@ -578,29 +624,43 @@ select.br-input {
 .user {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  margin-left: var(--space-2);
-  padding-left: var(--space-4);
-  border-left: 1px solid var(--border);
+  gap: var(--space-1);
 }
-.user-avatar {
-  display: grid;
+/* Navbar Brume : filet vertical, pastille d'initiale, nom. */
+.nav-divider {
+  width: 1px;
+  height: 40px;
+  margin: 0 var(--space-3);
+  background: var(--border);
+}
+.avatar {
+  display: inline-grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  flex: none;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-full);
   background: var(--brand-soft);
   color: var(--brand);
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1;
 }
 .user-name {
+  margin: 0 var(--space-1) 0 var(--space-2);
   font-weight: 700;
-  font-size: 14px;
-  max-width: 140px;
+  font-size: 15px;
+  line-height: 22px;
+  max-width: 160px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.settings-btn svg {
+  transition: transform 0.3s ease;
+}
+.settings-btn[aria-expanded='true'] svg {
+  transform: rotate(60deg);
 }
 
 .layout {
@@ -1240,9 +1300,13 @@ select.br-input {
   .brand-job {
     display: block;
   }
-  .user {
-    margin-left: 0;
-    padding-left: var(--space-2);
+  .nav-divider {
+    display: none;
+  }
+  .icon-btn,
+  .avatar {
+    width: 38px;
+    height: 38px;
   }
   .layout {
     grid-template-columns: minmax(0, 1fr);
