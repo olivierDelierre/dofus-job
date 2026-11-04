@@ -7,7 +7,12 @@ import { SettingsMenu } from './components/SettingsMenu';
 import { createRarityResolver } from './lib/rarity';
 import type { GameData } from './lib/types';
 
-export const DEFAULT_PROGRESS: JobProgress = { level: 1, target: null, step: 1, excluded: [] };
+export const DEFAULT_PROGRESS: JobProgress = {
+  level: 1,
+  target: null,
+  step: 1,
+  excluded: [],
+};
 
 export function App() {
   const [user, setUser] = useState<User | null | undefined>(undefined);
@@ -88,13 +93,18 @@ export function App() {
           </svg>
         </button>
         <div className="brand">
-          <img src={`/img/jobs/${job.id}.png`} alt="" />
+          <img className="brand-mark" src="/img/jobs/27.png" alt="" />
           <span className="brand-name">Atelier</span>
           <span className="brand-job">{job.name}</span>
         </div>
-        <span className={`save-state ${saveState}`}>
-          {saveState === 'saving' ? 'Sauvegarde…' : saveState === 'saved' ? 'Sauvegardé' : saveState === 'error' ? 'Erreur de sauvegarde' : ''}
-        </span>
+        {saveState !== 'idle' && (
+          <span
+            className={`save-state br-badge ${saveState === 'saved' ? 'br-badge--success' : saveState === 'error' ? 'br-badge--danger' : ''}`}
+            role="status"
+          >
+            {saveState === 'saving' ? 'Sauvegarde…' : saveState === 'saved' ? 'Sauvegardé' : 'Erreur de sauvegarde'}
+          </span>
+        )}
         <SettingsMenu settings={user.settings} onChange={updateSettings} />
         <div className="user">
           <span className="user-avatar" title={user.username} aria-hidden>
@@ -102,7 +112,16 @@ export function App() {
           </span>
           <span className="user-name">{user.username}</span>
           <button className="icon-btn" aria-label="Déconnexion" title="Déconnexion" onClick={() => api.logout().then(() => setUser(null))}>
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
             </svg>
           </button>
@@ -135,9 +154,7 @@ export function App() {
           onChange={(p) => updateProgress(job.id, p)}
         />
       </main>
-      <footer className="footer">
-        Données DofusDB du {new Date(data.generatedAt).toLocaleDateString('fr-FR')}
-      </footer>
+      <footer className="footer">Données DofusDB du {new Date(data.generatedAt).toLocaleDateString('fr-FR')}</footer>
     </div>
   );
 }

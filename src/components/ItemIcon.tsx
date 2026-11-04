@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { RARITY_LABEL, type RarityResolver } from '../lib/rarity';
+import { RARITY_LABEL, RARITY_TONE, type RarityResolver } from '../lib/rarity';
 import type { GameData, Monster } from '../lib/types';
 
 const MAX_DROPS = 8;
@@ -54,7 +54,11 @@ function ItemCard({ data, rarity, id, anchor }: { data: GameData; rarity: Rarity
   const item = data.items[id];
   const r = rarity.ofItem(id);
   const card = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<{ left: number; top: number; below: boolean } | null>(null);
+  const [pos, setPos] = useState<{
+    left: number;
+    top: number;
+    below: boolean;
+  } | null>(null);
 
   // Place la fiche au-dessus de l'icône (ou en dessous s'il n'y a pas la place), sans sortir de l'écran.
   useLayoutEffect(() => {
@@ -69,16 +73,14 @@ function ItemCard({ data, rarity, id, anchor }: { data: GameData; rarity: Rarity
 
   if (!item) return null;
   // Monstres classiques d'abord (ce qu'on farme vraiment), puis boss, puis archimonstres et monstres de quête.
-  const drops = [...(item.drops ?? [])].sort(
-    ([ma, ra], [mb, rb]) => monsterRank(data.monsters[ma]) - monsterRank(data.monsters[mb]) || rb - ra,
-  );
+  const drops = [...(item.drops ?? [])].sort(([ma, ra], [mb, rb]) => monsterRank(data.monsters[ma]) - monsterRank(data.monsters[mb]) || rb - ra);
   const shown = drops.slice(0, MAX_DROPS);
   const maxRate = Math.max(...shown.map(([, rate]) => rate), 1);
 
   return (
     <div
       ref={card}
-      className={`item-card r${r.rarity}`}
+      className={`item-card br-glass r${r.rarity}`}
       role="tooltip"
       style={pos ? { left: pos.left, top: pos.top } : { left: 0, top: 0, visibility: 'hidden' }}
     >
@@ -90,7 +92,7 @@ function ItemCard({ data, rarity, id, anchor }: { data: GameData; rarity: Rarity
           <div className="item-card-name">{item.name}</div>
           <div className="item-card-sub">
             Niv. {item.level}
-            <span className={`tag r${r.rarity}`}>{RARITY_LABEL[r.rarity]}</span>
+            <span className={`br-badge br-badge--${RARITY_TONE[r.rarity]}`}>{RARITY_LABEL[r.rarity]}</span>
           </div>
         </div>
       </header>
@@ -100,9 +102,9 @@ function ItemCard({ data, rarity, id, anchor }: { data: GameData; rarity: Rarity
 
       {(item.harvestable || item.hasRecipe || item.tokenShop) && (
         <div className="item-card-sources">
-          {item.harvestable && <span>Récoltable</span>}
-          {item.hasRecipe && <span>Craftable</span>}
-          {item.tokenShop && <span>Boutique à jetons</span>}
+          {item.harvestable && <span className="br-badge br-badge--brand">Récoltable</span>}
+          {item.hasRecipe && <span className="br-badge br-badge--brand">Craftable</span>}
+          {item.tokenShop && <span className="br-badge br-badge--brand">Boutique à jetons</span>}
         </div>
       )}
 
@@ -132,7 +134,7 @@ function DropRow({ monster, rate, max }: { monster: Monster | undefined; rate: n
   if (!monster) return null;
   const badge = monster.miniBoss ? 'Archi' : monster.boss ? 'Boss' : monster.quest ? 'Quête' : null;
   return (
-    <li className={badge ? `special ${badge.toLowerCase()}` : ''}>
+    <li>
       <span className="mob">
         {broken ? (
           <span className="mob-fallback">{monster.name[0]}</span>
@@ -143,7 +145,7 @@ function DropRow({ monster, rate, max }: { monster: Monster | undefined; rate: n
       <span className="drop-info">
         <span className="drop-name">
           <span>{monster.name}</span>
-          {badge && <em>{badge}</em>}
+          {badge && <span className={`br-badge ${badge === 'Boss' ? 'br-badge--warning' : 'br-badge--danger'}`}>{badge}</span>}
         </span>
         <span className="drop-meta">Niv. {monster.level}</span>
       </span>

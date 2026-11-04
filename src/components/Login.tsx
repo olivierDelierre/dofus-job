@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { api, type User } from '../api';
+import { Tabs } from './Tabs';
 
 const SHOWCASE = [2, 24, 28, 36, 26, 41, 11, 13, 15, 16, 27, 60, 65];
 
@@ -25,31 +26,46 @@ export function Login({ onLogged }: { onLogged: (u: User) => void }) {
 
   return (
     <div className="login-page">
-      <div className="login-card">
+      <div className="login-card br-card">
         <div className="login-icons">
           {SHOWCASE.map((id) => (
             <img key={id} src={`/img/jobs/${id}.png`} alt="" />
           ))}
         </div>
-        <h1>Atelier</h1>
-
-        <div className="tabs">
-          <button className={mode === 'login' ? 'active' : ''} onClick={() => setMode('login')} type="button">
-            Connexion
-          </button>
-          <button className={mode === 'register' ? 'active' : ''} onClick={() => setMode('register')} type="button">
-            Créer un compte
-          </button>
+        <div>
+          <h1>Atelier</h1>
+          <p className="muted small" style={{ margin: 0 }}>
+            Métiers Dofus
+          </p>
         </div>
 
+        <Tabs
+          label="Connexion ou création de compte"
+          value={mode}
+          onChange={setMode}
+          items={[
+            { value: 'login', label: 'Connexion' },
+            { value: 'register', label: 'Créer un compte' },
+          ]}
+        />
+
         <form onSubmit={submit}>
-          <label>
-            Pseudo
-            <input value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" required minLength={3} maxLength={24} />
-          </label>
-          <label>
-            Mot de passe
+          <label className="br-field">
+            <span className="br-field__label">Pseudo</span>
             <input
+              className="br-input"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoComplete="username"
+              required
+              minLength={3}
+              maxLength={24}
+            />
+          </label>
+          <label className="br-field">
+            <span className="br-field__label">Mot de passe</span>
+            <input
+              className="br-input"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -58,8 +74,13 @@ export function Login({ onLogged }: { onLogged: (u: User) => void }) {
               minLength={6}
             />
           </label>
-          {error && <div className="error">{error}</div>}
-          <button className="primary" disabled={busy}>
+          {error && (
+            <div className="callout callout--danger form-error" role="alert">
+              <strong>Erreur</strong>
+              <span>{error}</span>
+            </div>
+          )}
+          <button className="br-btn br-btn--primary" disabled={busy}>
             {mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
           </button>
         </form>

@@ -4,6 +4,7 @@ import type { GameData, Item, Rarity, Recipe } from './types';
 const RARE_TYPES = new Set([152]);
 
 export const RARITY_LABEL: Record<Rarity, string> = { 0: 'Commun', 1: 'Peu commun', 2: 'Rare' };
+export const RARITY_TONE: Record<Rarity, 'success' | 'warning' | 'danger'> = { 0: 'success', 1: 'warning', 2: 'danger' };
 
 export interface RarityInfo {
   rarity: Rarity;

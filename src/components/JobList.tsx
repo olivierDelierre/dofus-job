@@ -65,6 +65,7 @@ export function JobList({ data, rarity, settings, progress, selected, onSelect, 
     <nav className="job-list">
       <div className="job-list-tools">
         <select
+          className="br-input br-input--sm"
           aria-label="Trier les métiers"
           value={settings.sort}
           onChange={(e) => onSettingsChange({ ...settings, sort: e.target.value as JobSort })}
@@ -75,7 +76,7 @@ export function JobList({ data, rarity, settings, progress, selected, onSelect, 
             </option>
           ))}
         </select>
-        <button className={`ghost small ${managing ? 'active' : ''}`} onClick={() => setManaging((m) => !m)}>
+        <button className="br-btn br-btn--ghost br-btn--sm" aria-pressed={managing} onClick={() => setManaging((m) => !m)}>
           {managing ? 'Terminé' : hidden.size > 0 ? `Cachés (${hidden.size})` : 'Cacher…'}
         </button>
       </div>
