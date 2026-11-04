@@ -4,6 +4,8 @@ import { Login } from './components/Login';
 import { JobList } from './components/JobList';
 import { JobPanel } from './components/JobPanel';
 import { SettingsMenu } from './components/SettingsMenu';
+import { PinnedCards } from './components/ItemIcon';
+import { pinStore } from './lib/pins';
 import { createRarityResolver } from './lib/rarity';
 import type { GameData } from './lib/types';
 
@@ -111,7 +113,17 @@ export function App() {
             {user.username[0].toUpperCase()}
           </span>
           <span className="user-name">{user.username}</span>
-          <button className="icon-btn" aria-label="Déconnexion" title="Déconnexion" onClick={() => api.logout().then(() => setUser(null))}>
+          <button
+            className="icon-btn"
+            aria-label="Déconnexion"
+            title="Déconnexion"
+            onClick={() =>
+              api.logout().then(() => {
+                pinStore.clear();
+                setUser(null);
+              })
+            }
+          >
             <svg
               viewBox="0 0 24 24"
               width="18"
@@ -154,6 +166,7 @@ export function App() {
           onChange={(p) => updateProgress(job.id, p)}
         />
       </main>
+      <PinnedCards data={data} rarity={rarity} />
       <footer className="footer">Données DofusDB du {new Date(data.generatedAt).toLocaleDateString('fr-FR')}</footer>
     </div>
   );

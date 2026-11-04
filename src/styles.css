@@ -985,6 +985,44 @@ select.br-input {
   font-size: 14px;
   line-height: 20px;
 }
+.item-card:not(.item-card--pinned) {
+  z-index: 70;
+}
+/* Fiche épinglée : reste ouverte, se déplace en la faisant glisser depuis n'importe quel point. */
+.item-card--pinned {
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.item-card--pinned.is-dragging {
+  cursor: grabbing;
+  box-shadow: var(--shadow-lg), 0 0 0 2px var(--brand);
+}
+.item-card--pinned header {
+  padding-right: var(--space-10);
+}
+.item-card-close {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+}
+.item-card-hint {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--ink-muted);
+}
+.item.is-pinned {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
 .item-card header {
   display: flex;
   gap: var(--space-3);
